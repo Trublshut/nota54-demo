@@ -130,7 +130,7 @@ tr.best td{background:rgba(20,184,166,.10)}
       <h3>Scan to send a freight inquiry</h3>
       <div class="qr" id="qr"></div>
       <div class="tiny muted">Or open: <span class="code" id="custUrl"></span></div>
-      <div class="row" style="margin-top:8px"><button class="btn" id="copyBtn">Copy link</button><button class="btn" id="simBtn" title="Sends a sample inquiry through the same live channel">+ Simulate inquiry</button><button class="btn" id="newBtn" title="Start a fresh session with a new QR code">New session</button></div>
+      <div class="row" style="margin-top:8px"><button class="btn" id="copyBtn">Copy link</button><button class="btn pri" id="opsBtn" title="Opens the forwarder ops / orders board in a second window with this session">Open ops board</button><button class="btn" id="simBtn" title="Sends a sample inquiry through the same live channel">+ Simulate inquiry</button><button class="btn" id="newBtn" title="Start a fresh session with a new QR code">New session</button></div>
       <div id="hostHint"></div>
       <details style="margin-top:8px"><summary class="tiny muted" style="cursor:pointer">Customer page address</summary>
         <div class="row" style="margin-top:6px"><input type="text" id="custBase" style="flex:1;min-width:0" placeholder="https://…/index.html"><button class="btn" id="custSave">Save</button></div>
@@ -2671,6 +2671,7 @@ function drawQR(){
   $('#hostHint').innerHTML=local&&!st.custBase?'<div class="hint">This page is opened locally, so phones cannot reach this link. Host the folder (e.g. GitHub Pages) or set the public customer page address below.</div>':'';
 }
 $('#copyBtn').onclick=function(){var u=custUrl();(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){toast('Link copied')},function(){prompt('Copy this link',u)})};
+$('#opsBtn').onclick=function(){var base=location.href.split('#')[0].split('?')[0].replace(/backend\.html$/i,'ops.html');if(base===location.href.split('#')[0].split('?')[0])base=location.href.replace(/[^\/]+$/,'ops.html');window.open(base+'?c='+encodeURIComponent(st.code),'_blank');};
 $('#custSave').onclick=function(){var v=$('#custBase').value.trim();st.custBase=/^https?:\/\/.+/.test(v)&&v!==custBase()?v.split('?')[0]:(v?st.custBase:'');save();drawQR();toast('Customer page address saved')};
 $('#newBtn').onclick=function(){if(!confirm('Start a new session? The QR code changes and the inquiry list is cleared.'))return;
   st={code:rid(16),start:Math.floor(Date.now()/1000)-5,inqs:[],auto:st.auto,margin:st.margin,custBase:st.custBase};INQ=[];SEL=null;save();drawQR();connect();renderAll();toast('New session started')};

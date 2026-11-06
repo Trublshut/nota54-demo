@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Nota54 · Ops · orders (live demo)</title>
+<style>
+:root{--n9:#0a1628;--n85:#0e1d33;--n8:#12243f;--n7:#1a3256;--n6:#25446f;--teal:#14b8a6;--teal2:#2dd4bf;--tsoft:rgba(20,184,166,.14);--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--text:#e6edf7;--muted:#93a4bf;--line:rgba(147,164,191,.18);--card:#0f1f38;--font:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:var(--font);background:radial-gradient(1000px 500px at 15% -10%,rgba(20,184,166,.10),transparent 60%),var(--n9);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh}
+button,input{font-family:inherit}
+.top{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--line);background:rgba(6,13,26,.8);position:sticky;top:0;z-index:20;backdrop-filter:blur(8px)}
+.wm{font-weight:800;font-size:21px;letter-spacing:-.02em}.wm b{color:var(--teal2)}
+.sep{width:1px;height:24px;background:var(--line)}.sub{color:var(--muted);font-size:13px}.sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+.pill.sample{color:#fde68a;background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.dot.live{background:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.2)}.dot.connecting,.dot.reconnecting{background:var(--amber)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px 20px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.kpi .v{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi .s{font-size:11px;color:var(--muted)}
+.kpi.hl{border-color:rgba(45,212,191,.5)}.kpi.hl .v{color:var(--teal2)}
+.wrap{padding:14px 20px 20px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent),var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+h3{margin:0 0 10px;font-size:14px;letter-spacing:.01em}
+.muted{color:var(--muted)}.tiny{font-size:11.5px}.small{font-size:12.5px}
+.code{font-family:var(--mono);font-size:12px;color:var(--teal2);word-break:break-all}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--n6);background:var(--n8);color:var(--text);padding:7px 12px;border-radius:9px;font-weight:600;font-size:12.5px;cursor:pointer}
+.btn:hover{border-color:var(--teal)}.btn.pri{background:linear-gradient(135deg,var(--teal),#0ea5a0);color:#03201c;border-color:transparent}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type=text]{background:var(--n85);border:1px solid var(--n6);color:var(--text);padding:8px 10px;border-radius:8px;font-size:13px;font-family:var(--mono)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid var(--line);white-space:nowrap}
+.chip.ok{color:#86efac;border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.1)}
+.chip.amber{color:#fcd34d;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.12)}
+.chip.info,.chip.teal{color:var(--teal2);border-color:rgba(45,212,191,.4);background:var(--tsoft)}
+.chip.run{color:#fff;border-color:var(--teal);background:var(--tsoft)}
+.chip.run::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--teal2);animation:bl 1s infinite}
+@keyframes bl{50%{opacity:.2}}
+@keyframes pop{0%{transform:scale(.98);opacity:0}100%{transform:none;opacity:1}}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:360px;color:var(--muted);padding:24px}
+.empty .big{font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px}
+.pulse{width:64px;height:64px;border-radius:50%;background:var(--tsoft);border:2px solid var(--teal);margin-bottom:16px;animation:pu 2s infinite}
+@keyframes pu{0%{box-shadow:0 0 0 0 rgba(20,184,166,.5)}100%{box-shadow:0 0 0 28px rgba(20,184,166,0)}}
+table.board{width:100%;border-collapse:collapse;font-size:13px}
+table.board th,table.board td{padding:10px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.board th{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;position:sticky;top:0;background:var(--card)}
+table.board td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.board tr.rownew{animation:pop .45s ease}
+table.board tr.flash{background:rgba(20,184,166,.12)}
+.cust{font-weight:700}.co{color:var(--muted);font-size:12px;font-weight:500}
+.freight{font-size:12.5px}.freight .lane{font-weight:600}.meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.dbstamp{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:4px 8px;border-radius:8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);font-size:11.5px;color:#86efac;font-family:var(--mono)}
+.dbstamp b{color:#bbf7d0;font-weight:700}
+.foot{padding:0 20px 16px;font-size:11.5px;color:var(--muted)}.foot b{color:#fcd34d}
+.hidden{display:none!important}
+.join{max-width:480px;margin:60px auto;padding:0 20px}
+.toast{position:fixed;right:18px;bottom:18px;background:var(--n8);border:1px solid var(--teal);padding:10px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;transform:translateY(10px);transition:.3s;z-index:50;font-size:13px;pointer-events:none;max-width:360px}
+.toast.show{opacity:1;transform:none}
+
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.85fr);gap:14px;align-items:start}
+.notif-list{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 280px);overflow:auto;min-height:120px}
+.notif{padding:10px 12px;border-radius:10px;background:var(--n85);border:1px solid var(--line);animation:pop .4s ease both}
+.notif .toprow{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.notif .ev{font-weight:700;font-size:13px}
+.notif .to{font-size:12px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
+.notif .who{font-size:11.5px;color:var(--muted);margin-top:2px}
+.chip.sms{color:#fcd34d;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.12)}
+.chip.email{color:#93c5fd;border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.12)}
+.chip.demo{color:#fde68a;border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.1);font-size:10px}
+.notif-empty{padding:18px 8px;text-align:center;color:var(--muted);font-size:12.5px}
+@media (max-width:1100px){.layout{grid-template-columns:1fr}}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.sub,.sep{display:none}table.board{font-size:12px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wm">Nota<b>54</b></div>
+  <div class="sep"></div>
+  <div class="sub">Ops · orders · Sample Forwarder Ltd</div>
+  <div class="sp"></div>
+  <span class="pill" id="sessPill" style="display:none">Session <span class="code" id="sessCode"></span></span>
+  <span class="pill" id="conn"><span class="dot" id="connDot"></span><span id="connTxt">Connecting…</span></span>
+  <span class="pill sample">Demo with sample rates</span>
+</header>
+
+<section id="joinView" class="join hidden">
+  <div class="card">
+    <h3>Join a live session</h3>
+    <p class="small muted" style="margin:0 0 12px">Open this page from the backend’s <b>Open ops board</b> button, or paste the 16-character session code shown next to the QR code.</p>
+    <label class="tiny muted" for="codeIn">Session code</label>
+    <div class="row" style="margin-top:6px">
+      <input type="text" id="codeIn" maxlength="16" placeholder="16 characters" style="flex:1;min-width:0" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="btn pri" id="joinBtn">Open ops board</button>
+    </div>
+    <div class="tiny muted" style="margin-top:8px">Same session as the presenter’s backend tab. Orders appear here when quotes are accepted.</div>
+  </div>
+</section>
+
+<section id="boardView" class="hidden">
+  <section class="kpis" id="kpis"></section>
+  <div class="wrap">
+    <div class="layout">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <h3 style="margin:0">Forwarder pipeline</h3>
+        <span class="chip" id="cnt">0 orders</span>
+      </div>
+      <p class="tiny muted" style="margin:0 0 12px">Live view of how accepted quotes land in Sample Forwarder’s ops system and sync into their database as jobs in progress.</p>
+      <div id="boardWrap">
+        <div class="empty" id="empty">
+          <div class="pulse"></div>
+          <div class="big">Waiting for orders</div>
+          <div>When a customer accepts a quote on their phone, the job appears here as <b style="color:var(--text)">In progress</b> with a synced forwarder DB record.</div>
+        </div>
+        <table class="board hidden" id="tbl">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Freight</th>
+              <th class="n">Quoted</th>
+              <th>Status</th>
+              <th>Forwarder DB</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px">
+        <h3 style="margin:0">Client notifications</h3>
+        <span class="chip" id="nCnt">0</span>
+      </div>
+      <p class="tiny muted" style="margin:0 0 12px">Mock Email + SMS the forwarder’s client would get at each milestone. <b style="color:#fcd34d">Demo only — nothing is actually sent.</b></p>
+      <div class="notif-list" id="notifList">
+        <div class="notif-empty" id="notifEmpty">No notifications yet. They appear when a quote is sent, accepted, or booked.</div>
+      </div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<div class="foot"><b>Demo with sample rates.</b> This ops board is sample UI for the live demo. Carriers and rates are fictional. Messages travel over the public ntfy.sh relay; do not enter confidential information. © 2026 Trublshut AI Limited, Kenya.</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---- Nota54 live demo transport: ntfy.sh public pub/sub (no account) ---- */
+var NTFY='https://ntfy.sh';
+var TOPIC_PREFIX='nota54-demo-';
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+var Bus={
+  pub:async function(topic,obj,tries){
+    tries=tries||5;var body=JSON.stringify(obj);
+    if(body.length>3900){return false}
+    for(var i=0;i<tries;i++){
+      try{
+        var r=await fetch(NTFY+'/'+topic,{method:'POST',body:body});
+        if(r.ok)return true;
+        if(r.status===429){await sleep(3000*(i+1));continue}
+        if(r.status>=400&&r.status<500)return false;
+      }catch(e){}
+      await sleep(700*(i+1)*(i+1));
+    }
+    return false;
+  },
+  sub:function(topic,opt){
+    var es=null,lastId=null,closed=false,seen={},retry=0,timer=null,beat=Date.now(),wd=null;
+    function status(s){if(opt.onStatus)opt.onStatus(s)}
+    function open(){
+      if(closed)return;
+      clearTimeout(timer);
+      if(es){try{es.close()}catch(e){}}
+      var since=lastId||opt.since;
+      var url=NTFY+'/'+topic+'/sse'+(since?('?since='+encodeURIComponent(since)):'');
+      status('connecting');
+      es=new EventSource(url);
+      es.onopen=function(){retry=0;beat=Date.now();status('live')};
+      es.addEventListener('keepalive',function(){beat=Date.now()});
+      es.addEventListener('open',function(){beat=Date.now()});
+      es.onmessage=function(ev){
+        beat=Date.now();var d;try{d=JSON.parse(ev.data)}catch(e){return}
+        if(!d||d.event!=='message'||seen[d.id])return;
+        seen[d.id]=1;lastId=d.id;
+        var m;try{m=JSON.parse(d.message)}catch(e){return}
+        if(m&&typeof m==='object')opt.onMsg(m,d);
+      };
+      es.onerror=function(){
+        status('reconnecting');
+        try{es.close()}catch(e){}
+        clearTimeout(timer);timer=setTimeout(open,Math.min(15000,800*Math.pow(2,retry++)));
+      };
+    }
+    open();
+    wd=setInterval(function(){if(!closed&&Date.now()-beat>75000){open()}},10000);
+    function wake(){if(!closed&&(!es||es.readyState!==1))open()}
+    document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')wake()});
+    window.addEventListener('online',wake);
+    window.addEventListener('pageshow',wake);
+    return {close:function(){closed=true;clearInterval(wd);clearTimeout(timer);if(es)es.close()},reconnect:open};
+  }
+};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d){d=new Date(d);return String(d.getDate()).padStart(2,'0')+' '+MON[d.getMonth()]+' '+d.getFullYear()}
+function fmtUSD(n){if(n==null||isNaN(n))return '—';return 'USD '+Math.round(n).toLocaleString('en-US')}
+function hms(t){var d=new Date(t);return [d.getHours(),d.getMinutes(),d.getSeconds()].map(function(x){return String(x).padStart(2,'0')}).join(':')}
+var LANES_O={mba:'Mombasa',nbo:'Nairobi ICD',oth:'Other'};
+var LANES_D={rtm:'Rotterdam',sha:'Shanghai',nyc:'New York',ham:'Hamburg',dxb:'Dubai (Jebel Ali)',oth:'Other'};
+
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var LS='n54.backend.v1';
+var params=new URLSearchParams(location.search);
+var code=(params.get('c')||params.get('s')||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+var ORDERS={},ORDER_IDS=[],subIn=null,outSubs={},startSince=Math.floor(Date.now()/1000)-3600;
+var flashUntil={};
+var NOTIFS=[]; // newest first; max 12
+var HYDRATING=false;
+
+function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show')},2600)}
+
+function fakeDbId(id){
+  var n=0;for(var i=0;i<id.length;i++)n=(n*31+id.charCodeAt(i))>>>0;
+  return 'SF-2026-'+String(1000+(n%9000));
+}
+
+function summaryFromF(f){
+  if(!f)return {lane:'—',ctr:'—',cargo:''};
+  var o=(f.o==='oth'?(f.oTxt||'Origin'):(LANES_O[f.o]||f.o||'Origin'));
+  var d=(f.d==='oth'?(f.dTxt||'Destination'):(LANES_D[f.d]||f.d||'Destination'));
+  var ctr=f.ctr==='LCL'?'LCL':((f.qty?f.qty+' × ':'')+(f.ctr||'?')+'ft');
+  var wt=[];if(f.wt)wt.push(f.wt+' kg');if(f.cbm)wt.push(f.cbm+' CBM');
+  return {lane:o+' → '+d,ctr:ctr,cargo:f.cargo||'',wt:wt.join(' · ')};
+}
+
+function statusOf(o){
+  if(o.declined)return 'Declined';
+  if(o.booked||o.status==='Booked')return 'Booked';
+  if(o.accepted||o.status==='In progress')return 'In progress';
+  if(o.quoted||o.sell!=null||o.no)return 'Quoted';
+  return 'Quoted';
+}
+
+function ensure(id,seed){
+  if(!ORDERS[id]){
+    ORDERS[id]=Object.assign({id:id,recv:Date.now(),f:{},sell:null,no:'',accepted:false,booked:false,declined:false,dbId:null,ref:null,status:'Quoted'},seed||{});
+    ORDER_IDS.push(id);
+  }else if(seed){
+    var o=ORDERS[id];
+    Object.keys(seed).forEach(function(k){if(seed[k]!=null&&seed[k]!=='')o[k]=seed[k]});
+  }
+  return ORDERS[id];
+}
+
+function contactFor(o){
+  var f=o.f||{};
+  var email=(f.email&&String(f.email).trim())||'shipper@example.com';
+  var phone=(f.phone&&String(f.phone).trim())||'+254 700 000 000';
+  var name=(f.name&&String(f.name).trim())||'Shipper';
+  return {email:email,phone:phone,name:name};
+}
+function pushNotif(channel,event,o,at){
+  var c=contactFor(o);
+  var to=channel==='Email'?c.email:c.phone;
+  NOTIFS.unshift({id:o.id+'-'+channel+'-'+event+'-'+(at||Date.now()),channel:channel,event:event,to:to,who:c.name,orderId:o.id,at:at||Date.now(),demo:true});
+  if(NOTIFS.length>12)NOTIFS.length=12;
+  renderNotifs();
+}
+function notifyMilestone(o,key,event){
+  if(!o)return;
+  o._notif=o._notif||{};
+  if(o._notif[key])return;
+  o._notif[key]=1;
+  var at=Date.now();
+  /* slight SMS lag after email for demo realism */
+  pushNotif('Email',event,o,at);
+  pushNotif('SMS',event,o,at+(HYDRATING?0:800));
+}
+function markQuoted(o){
+  if(o.declined)return;
+  o.quoted=true;
+  if(!o.accepted&&!o.booked)o.status='Quoted';
+  notifyMilestone(o,'quoted','Quote sent');
+}
+function markAccepted(o){
+  if(o.declined)return;
+  var was=o.accepted;
+  o.accepted=true;o.status='In progress';
+  if(!o.dbId)o.dbId=fakeDbId(o.id);
+  flashUntil[o.id]=Date.now()+3500;
+  if(!was)notifyMilestone(o,'accepted','Order accepted');
+}
+function markBooked(o,ref){
+  var was=o.booked;
+  o.booked=true;o.status='Booked';
+  if(ref)o.ref=ref;
+  if(!o.dbId)o.dbId=fakeDbId(o.id);
+  flashUntil[o.id]=Date.now()+3500;
+  if(!was)notifyMilestone(o,'booked','Booking confirmed');
+}
+function renderNotifs(){
+  var list=$('#notifList'), empty=$('#notifEmpty'), cnt=$('#nCnt');
+  if(!list)return;
+  if(cnt)cnt.textContent=String(NOTIFS.length);
+  if(!NOTIFS.length){
+    list.innerHTML='<div class="notif-empty" id="notifEmpty">No notifications yet. They appear when a quote is sent, accepted, or booked.</div>';
+    return;
+  }
+  list.innerHTML=NOTIFS.map(function(n){
+    var ch=n.channel==='SMS'?'sms':'email';
+    return '<div class="notif">'+
+      '<div class="toprow">'+
+        '<span class="chip '+ch+'">'+esc(n.channel)+'</span>'+
+        '<span class="chip demo">Demo — not actually sent</span>'+
+      '</div>'+
+      '<div class="ev" style="margin-top:6px">'+esc(n.event)+'</div>'+
+      '<div class="to">→ '+esc(n.to)+'</div>'+
+      '<div class="who">'+esc(n.who)+' · #'+esc(String(n.orderId||'').slice(0,6).toUpperCase())+' · '+hms(n.at)+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function chipHTML(st){
+  if(st==='Booked')return '<span class="chip ok">Booked</span>';
+  if(st==='In progress')return '<span class="chip run">In progress</span>';
+  if(st==='Declined')return '<span class="chip">Declined</span>';
+  return '<span class="chip teal">Quoted</span>';
+}
+
+function renderKPIs(){
+  var list=ORDER_IDS.map(function(id){return ORDERS[id]}).filter(function(o){return !o.declined||o.accepted||o.quoted||o.sell!=null});
+  var quoted=0,prog=0,booked=0,val=0;
+  list.forEach(function(o){
+    var s=statusOf(o);
+    if(s==='Booked')booked++;
+    else if(s==='In progress')prog++;
+    else if(s==='Quoted')quoted++;
+    if(o.sell)val+=o.sell;
+  });
+  $('#kpis').innerHTML=[
+    ['On board',list.length,'This session',''],
+    ['Quoted',quoted,'Awaiting customer',''],
+    ['In progress',prog,'Synced to forwarder DB','hl'],
+    ['Booked',booked,val?fmtUSD(val)+' quoted':'Sample rates','']
+  ].map(function(k){return '<div class="kpi '+k[3]+'"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>'}).join('');
+}
+
+function renderBoard(){
+  var list=ORDER_IDS.map(function(id){return ORDERS[id]}).filter(function(o){
+    return o.quoted||o.sell!=null||o.accepted||o.booked||o.declined||o.no;
+  }).slice().reverse();
+  $('#cnt').textContent=list.length+(list.length===1?' order':' orders');
+  renderKPIs();
+  if(!list.length){
+    $('#empty').classList.remove('hidden');
+    $('#tbl').classList.add('hidden');
+    return;
+  }
+  $('#empty').classList.add('hidden');
+  $('#tbl').classList.remove('hidden');
+  var now=Date.now();
+  $('#tbody').innerHTML=list.map(function(o){
+    var sum=summaryFromF(o.f);
+    var st=statusOf(o);
+    var db='<span class="tiny muted">—</span>';
+    if(o.dbId&&(st==='In progress'||st==='Booked')){
+      db='<div class="dbstamp">Synced to forwarder DB · <b>'+esc(o.dbId)+'</b></div>'+(o.ref?'<div class="meta">Booking '+esc(o.ref)+'</div>':'');
+    }else if(st==='Quoted'){
+      db='<span class="tiny muted">Pending accept</span>';
+    }
+    var flash=flashUntil[o.id]&&flashUntil[o.id]>now?' flash':'';
+    return '<tr class="rownew'+flash+'" data-id="'+esc(o.id)+'">'+
+      '<td><div class="cust">'+esc(o.f.name||'Customer')+'</div><div class="co">'+esc(o.f.company||'')+'</div><div class="meta">#'+esc(o.id.slice(0,6).toUpperCase())+(o.recv?' · '+hms(o.recv):'')+'</div></td>'+
+      '<td class="freight"><div class="lane">'+esc(sum.lane)+'</div><div class="meta">'+esc(sum.ctr)+(sum.wt?' · '+esc(sum.wt):'')+'</div>'+(sum.cargo?'<div class="meta">'+esc(sum.cargo)+'</div>':'')+'</td>'+
+      '<td class="n"><b>'+fmtUSD(o.sell)+'</b>'+(o.no?'<div class="meta">'+esc(o.no)+'</div>':'')+'</td>'+
+      '<td>'+chipHTML(st)+'</td>'+
+      '<td>'+db+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+function listenOut(id){
+  if(outSubs[id])return;
+  outSubs[id]=Bus.sub(TOPIC_PREFIX+code+'-out-'+id,{
+    since:String(startSince),
+    onMsg:function(m){
+      if(!m||m.id!==id)return;
+      var o=ensure(id);
+      if(m.t==='quote'&&m.no){
+        o.no=m.no;o.sell=m.total;
+        if(Array.isArray(m.route)&&m.route.length===2){
+          o.f=o.f||{};
+        }
+        markQuoted(o);
+        renderBoard();
+      }else if(m.t==='bkd'&&m.ref){
+        markBooked(o,m.ref);renderBoard();toast('Booked · '+m.ref+' · synced '+o.dbId);
+      }
+    }
+  });
+}
+
+function onIn(m){
+  if(!m||typeof m.id!=='string'||!/^[a-z0-9]{8,12}$/.test(m.id))return;
+  if(m.t==='inq'&&m.f&&typeof m.f==='object'){
+    var f={};['name','company','email','o','oTxt','d','dTxt','cargo','wt','cbm','ctr','qty','ready','msg'].forEach(function(k){if(m.f[k]!=null)f[k]=String(m.f[k]).slice(0,k==='msg'?600:120)});
+    var o=ensure(m.id,{f:f,recv:Date.now()});
+    o.f=f;
+    listenOut(m.id);
+    /* Don't show bare inquiries until quoted — keeps board focused on ops story.
+       Still track them so acc/quote can attach. */
+    renderBoard();
+  }else if(m.t==='acc'){
+    var o=ensure(m.id,{});
+    if(m.q)o.no=m.q;
+    markQuoted(o);
+    markAccepted(o);
+    listenOut(m.id);
+    renderBoard();
+    toast('Accepted → In progress · '+o.dbId);
+  }else if(m.t==='dec'){
+    var o=ensure(m.id,{});
+    o.declined=true;o.status='Declined';
+    renderBoard();
+  }
+}
+
+function hydrateFromBackendLS(){
+  try{
+    var s=JSON.parse(localStorage.getItem(LS)||'null');
+    if(!s||s.code!==code||!Array.isArray(s.inqs))return;
+    if(s.start)startSince=Math.min(startSince,s.start);
+    HYDRATING=true;
+    s.inqs.forEach(function(q){
+      if(!q||!q.id)return;
+      var o=ensure(q.id,{f:q.f||{},recv:q.recv||Date.now(),sell:q.sell,no:q.no,ref:q.ref,declined:!!q.declined});
+      if(q.stage>=9||q.sell!=null||q.no)markQuoted(o);
+      if(q.stage>=10)markAccepted(o);
+      if(q.stage>=11||q.ref){markBooked(o,q.ref)}
+      else if(q.stage>=10){o.status='In progress'}
+      else if(o.quoted)o.status='Quoted';
+      listenOut(q.id);
+    });
+    HYDRATING=false;
+  }catch(e){HYDRATING=false}
+}
+
+function connect(){
+  if(subIn)subIn.close();
+  $('#sessPill').style.display='';
+  $('#sessCode').textContent=code;
+  $('#connTxt').textContent='Connecting…';
+  $('#connDot').className='dot connecting';
+  subIn=Bus.sub(TOPIC_PREFIX+code+'-in',{
+    since:String(startSince),
+    onStatus:function(s){
+      $('#connDot').className='dot '+s;
+      $('#connTxt').textContent=s==='live'?'Live · listening for orders':s==='connecting'?'Connecting…':'Reconnecting…';
+    },
+    onMsg:onIn
+  });
+}
+
+function showBoard(){
+  $('#joinView').classList.add('hidden');
+  $('#boardView').classList.remove('hidden');
+  hydrateFromBackendLS();
+  connect();
+  renderBoard();
+  renderNotifs();
+  setInterval(function(){
+    var dirty=false,now=Date.now();
+    Object.keys(flashUntil).forEach(function(id){if(flashUntil[id]&&flashUntil[id]<now){delete flashUntil[id];dirty=true}});
+    if(dirty)renderBoard();
+  },1000);
+}
+
+function showJoin(){
+  $('#joinView').classList.remove('hidden');
+  $('#boardView').classList.add('hidden');
+  $('#connTxt').textContent='Waiting for session';
+  $('#connDot').className='dot';
+}
+
+$('#joinBtn').onclick=function(){
+  var c=$('#codeIn').value.toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(c.length===16){location.search='?c='+c}
+  else{$('#codeIn').style.borderColor='#ef4444'}
+};
+$('#codeIn').addEventListener('keydown',function(e){if(e.key==='Enter')$('#joinBtn').click()});
+
+if(/^[a-z0-9]{16}$/.test(code))showBoard();
+else{
+  showJoin();
+  /* Bonus: if backend LS exists on same origin, offer that code */
+  try{
+    var s=JSON.parse(localStorage.getItem(LS)||'null');
+    if(s&&/^[a-z0-9]{16}$/.test(s.code||'')){$('#codeIn').value=s.code}
+  }catch(e){}
+}
+window.__n54ops={get orders(){return ORDERS},get notifs(){return NOTIFS},code:function(){return code}};
+})();
+</script>
+</body>
+</html>
